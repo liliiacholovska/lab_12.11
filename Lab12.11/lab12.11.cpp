@@ -182,17 +182,16 @@ void addOrUpdateEntry(DictionaryEntry*& head, const std::string& eng, const std:
     while (current) {
         if (current->englishWord == eng) {
             current->ukrainianWord = ukr;
-            current->accessCount += count;  // зб≥льшуЇмо л≥чильник на передане значенн€
+            current->accessCount += count;  
             return;
         }
         current = current->next;
     }
-    // якщо слово не було знайдено, створюЇмо новий елемент з переданою к≥льк≥стю звернень
     DictionaryEntry* newEntry = new DictionaryEntry(eng, ukr, count);
     insertInOrder(head, newEntry);
 }
 
-#endif // DICTIONARY_ENTRY_H
+#endif 
 
 void removeEntry(DictionaryEntry*& head, const std::string& eng) {
     DictionaryEntry* current = head, * prev = nullptr;
@@ -236,18 +235,18 @@ void loadDictionaryFromFile(DictionaryEntry*& head, const std::string& filename)
     std::cout << "Loading from file will overwrite the current dictionary. Continue? (y/n): ";
     char response;
     std::cin >> response;
-    clearInputBuffer(); // Clear the input buffer to handle next inputs properly
+    clearInputBuffer(); 
     if (response == 'y' || response == 'Y') {
-        deleteList(head); // Clears the existing list
+        deleteList(head); 
         head = nullptr;
     }
     else {
-        return; // Exit the function if the user chooses not to overwrite
+        return; 
     }
 
     std::string eng, ukr;
     int count;
-    while (file >> eng >> ukr >> count) { // Correctly formatted input assumed
+    while (file >> eng >> ukr >> count) {
         addOrUpdateEntry(head, eng, ukr, count);
     }
     file.close();
