@@ -3,206 +3,56 @@
 #include <string>
 #include <limits>
 
-#ifndef DICTIONARY_ENTRY_H
-#define DICTIONARY_ENTRY_H
+using namespace std;
 
 struct DictionaryEntry {
-    std::string englishWord;
-    std::string ukrainianWord;
+    string englishWord;
+    string ukrainianWord;
     int accessCount;
-    int height;
+    DictionaryEntry* next;
 
-    DictionaryEntry* next;  // For linked list
-    DictionaryEntry* left;  // For AVL tree
-    DictionaryEntry* right; // For AVL tree
-
-    DictionaryEntry(std::string eng, std::string ukr, int count)
-        : englishWord(eng), ukrainianWord(ukr), accessCount(count), next(nullptr), left(nullptr), right(nullptr), height(1) {}
+    DictionaryEntry(const string& eng, const string& ukr, int count)
+        : englishWord(eng), ukrainianWord(ukr), accessCount(count), next(nullptr) {}
 };
 
-void deleteList(DictionaryEntry* head);
-DictionaryEntry* findAndRemoveMax(DictionaryEntry*& head);
-void deleteTree(DictionaryEntry* root);
-void rebuildDictionary(DictionaryEntry*& oldHead, DictionaryEntry*& newHead);
-void printBinaryTree(const DictionaryEntry* root);
-void printList(const DictionaryEntry* head);
-void saveDictionaryToFile(DictionaryEntry* head, const std::string& filename);
-void loadDictionaryFromFile(DictionaryEntry*& head, const std::string& filename);
-DictionaryEntry* insertInAVLTree(DictionaryEntry* node, DictionaryEntry* newEntry);
-void insertInOrder(DictionaryEntry*& head, DictionaryEntry* newEntry);
-void addOrUpdateEntry(DictionaryEntry*& head, const std::string& eng, const std::string& ukr, int count = 0);
-void removeEntry(DictionaryEntry*& head, const std::string& eng);
-bool readInt(int& value);
-bool readLine(std::string& line);
-void clearInputBuffer();
-
-int height(DictionaryEntry* N) {
-    if (N == nullptr)
-        return 0;
-    return N->height;
-}
-
-int getBalance(DictionaryEntry* N) {
-    if (N == nullptr)
-        return 0;
-    return height(N->left) - height(N->right);
-}
-
-DictionaryEntry* rightRotate(DictionaryEntry* y) {
-    DictionaryEntry* x = y->left;
-    DictionaryEntry* T2 = x->right;
-
-    x->right = y;
-    y->left = T2;
-
-    y->height = std::max(height(y->left), height(y->right)) + 1;
-    x->height = std::max(height(x->left), height(x->right)) + 1;
-
-    return x;
-}
-
-DictionaryEntry* leftRotate(DictionaryEntry* x) {
-    DictionaryEntry* y = x->right;
-    DictionaryEntry* T2 = y->left;
-
-    y->left = x;
-    x->right = T2;
-
-    x->height = std::max(height(x->left), height(x->right)) + 1;
-    y->height = std::max(height(y->left), height(y->right)) + 1;
-
-    return y;
-}
-
-DictionaryEntry* insertInAVLTree(DictionaryEntry* node, DictionaryEntry* newEntry) {
-    if (node == nullptr)
-        return newEntry;
-
-    if (newEntry->englishWord < node->englishWord)
-        node->left = insertInAVLTree(node->left, newEntry);
-    else if (newEntry->englishWord > node->englishWord)
-        node->right = insertInAVLTree(node->right, newEntry);
-    else
-        return node;
-
-    node->height = 1 + std::max(height(node->left), height(node->right));
-
-    int balance = getBalance(node);
-
-    // Left Left Case
-    if (balance > 1 && newEntry->englishWord < node->left->englishWord)
-        return rightRotate(node);
-
-    // Right Right Case
-    if (balance < -1 && newEntry->englishWord > node->right->englishWord)
-        return leftRotate(node);
-
-    // Left Right Case
-    if (balance > 1 && newEntry->englishWord > node->left->englishWord) {
-        node->left = leftRotate(node->left);
-        return rightRotate(node);
-    }
-
-    // Right Left Case
-    if (balance < -1 && newEntry->englishWord < node->right->englishWord) {
-        node->right = rightRotate(node->right);
-        return leftRotate(node);
-    }
-
-    return node;
-}
-
-void printBinaryTree(const DictionaryEntry* root) {
-    if (!root) return;
-    printBinaryTree(root->left);
-    std::cout << root->englishWord << " - " << root->ukrainianWord << " (" << root->accessCount << ")\n";
-    printBinaryTree(root->right);
-}
-
-void deleteTree(DictionaryEntry* root) {
-    if (!root) return;
-    deleteTree(root->left);
-    deleteTree(root->right);
-    delete root;
-}
-
-void rebuildDictionary(DictionaryEntry*& oldHead, DictionaryEntry*& newHead) {
-    DictionaryEntry* maxNode;
-    while ((maxNode = findAndRemoveMax(oldHead)) != nullptr) {
-        newHead = insertInAVLTree(newHead, maxNode);
-    }
-}
-
-void insertInOrder(DictionaryEntry*& head, DictionaryEntry* newEntry) {
-    if (!head || newEntry->englishWord < head->englishWord) {
-        newEntry->next = head;
-        head = newEntry;
-    }
-    else {
-        DictionaryEntry* current = head;
-        while (current->next && current->next->englishWord < newEntry->englishWord) {
-            current = current->next;
-        }
-        newEntry->next = current->next;
-        current->next = newEntry;
-    }
-}
-
-void printList(const DictionaryEntry* head) {
+void deleteDictionary(DictionaryEntry*& head) {
     while (head) {
-        std::cout << head->englishWord << " - " << head->ukrainianWord << " (" << head->accessCount << ")\n";
+        DictionaryEntry* temp = head;
         head = head->next;
+        delete temp;
     }
 }
 
-DictionaryEntry* findAndRemoveMax(DictionaryEntry*& head) {
-    if (!head) return nullptr;
-
-    DictionaryEntry* current = head, * maxNode = head, * prev = nullptr, * maxPrev = nullptr;
+void addOrUpdateEntry(DictionaryEntry*& head, const string& eng, const string& ukr, int count = 0) {
+    DictionaryEntry* current = head;
+    DictionaryEntry* prev = nullptr;
     while (current) {
-        if (!maxNode || current->accessCount > maxNode->accessCount) {
-            maxNode = current;
-            maxPrev = prev;
+        if (current->englishWord == eng) {
+            current->ukrainianWord = ukr;
+            current->accessCount += count;
+            return;
         }
         prev = current;
         current = current->next;
     }
-    if (maxNode == head) {
-        head = head->next;
-    }
-    else if (maxPrev) {
-        maxPrev->next = maxNode->next;
-    }
-    maxNode->next = nullptr;
-    return maxNode;
-}
-
-void addOrUpdateEntry(DictionaryEntry*& head, const std::string& eng, const std::string& ukr, int count) {
-    DictionaryEntry* current = head;
-    while (current) {
-        if (current->englishWord == eng) {
-            current->ukrainianWord = ukr;
-            current->accessCount += count;  
-            return;
-        }
-        current = current->next;
-    }
     DictionaryEntry* newEntry = new DictionaryEntry(eng, ukr, count);
-    insertInOrder(head, newEntry);
+    if (!prev || prev->englishWord > eng) {
+        newEntry->next = head;
+        head = newEntry;
+    }
+    else {
+        newEntry->next = prev->next;
+        prev->next = newEntry;
+    }
 }
 
-#endif 
-
-void removeEntry(DictionaryEntry*& head, const std::string& eng) {
-    DictionaryEntry* current = head, * prev = nullptr;
+void removeEntry(DictionaryEntry*& head, const string& eng) {
+    DictionaryEntry* current = head;
+    DictionaryEntry* prev = nullptr;
     while (current) {
         if (current->englishWord == eng) {
-            if (prev) {
-                prev->next = current->next;
-            }
-            else {
-                head = head->next;
-            }
+            if (prev) prev->next = current->next;
+            else head = current->next;
             delete current;
             return;
         }
@@ -211,137 +61,165 @@ void removeEntry(DictionaryEntry*& head, const std::string& eng) {
     }
 }
 
-void saveDictionaryToFile(DictionaryEntry* head, const std::string& filename) {
-    std::ofstream file(filename);
-    if (!file.is_open()) {
-        std::cout << "Failed to open file for writing.\n";
+void printDictionary(const DictionaryEntry* head) {
+    if (!head) {
+        cout << "Dictionary is empty.\n";
         return;
     }
-    DictionaryEntry* current = head;
-    while (current) {
-        file << current->englishWord << " " << current->ukrainianWord << " " << current->accessCount << "\n";
-        current = current->next;
+    while (head) {
+        cout << "English: " << head->englishWord << " - Ukrainian: " << head->ukrainianWord << " (Accesses: " << head->accessCount << ")\n";
+        head = head->next;
     }
-    file.close();
 }
 
-void loadDictionaryFromFile(DictionaryEntry*& head, const std::string& filename) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cout << "Failed to open file for reading.\n";
-        return;
-    }
-
-    std::cout << "Loading from file will overwrite the current dictionary. Continue? (y/n): ";
-    char response;
-    std::cin >> response;
-    clearInputBuffer(); 
-    if (response == 'y' || response == 'Y') {
-        deleteList(head); 
-        head = nullptr;
+void saveDictionaryToFile(const DictionaryEntry* head, const string& filename) {
+    ofstream outFile(filename);
+    if (outFile.is_open()) {
+        while (head) {
+            outFile << head->englishWord << ":" << head->ukrainianWord << ":" << head->accessCount << "\n";
+            head = head->next;
+        }
+        outFile.close();
+        cout << "Dictionary saved to file successfully." << endl;
     }
     else {
-        return; 
+        cout << "Unable to open file for writing." << endl;
     }
-
-    std::string eng, ukr;
-    int count;
-    while (file >> eng >> ukr >> count) {
-        addOrUpdateEntry(head, eng, ukr, count);
-    }
-    file.close();
-    std::cout << "Dictionary loaded successfully.\n";
 }
 
-void clearInputBuffer() {
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-}
-
-bool readInt(int& value) {
-    std::cin >> value;
-    if (std::cin.fail()) {
-        std::cin.clear();
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        return false;
+void loadDictionaryFromFile(DictionaryEntry*& head, const string& filename) {
+    ifstream inFile(filename);
+    if (inFile.is_open()) {
+        deleteDictionary(head); // Clear current dictionary before loading new one
+        string line;
+        while (getline(inFile, line)) {
+            size_t first_colon = line.find(':');
+            size_t second_colon = line.find(':', first_colon + 1);
+            string eng = line.substr(0, first_colon);
+            string ukr = line.substr(first_colon + 1, second_colon - first_colon - 1);
+            int count = stoi(line.substr(second_colon + 1));
+            addOrUpdateEntry(head, eng, ukr, count);
+        }
+        inFile.close();
+        cout << "Dictionary loaded from file successfully." << endl;
     }
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    return true;
+    else {
+        cout << "Unable to open file for reading." << endl;
+    }
 }
 
-bool readLine(std::string& line) {
-    std::getline(std::cin, line);
+bool readLine(string& line) {
+    getline(cin, line);
     return !line.empty();
 }
 
-void deleteList(DictionaryEntry* head) {
-    while (head) {
-        DictionaryEntry* temp = head;
-        head = head->next;
-        delete temp;
+DictionaryEntry* findAndRemoveMaxAccess(DictionaryEntry*& head) {
+    if (!head) return nullptr;
+
+    DictionaryEntry* current = head;
+    DictionaryEntry* maxNode = head;
+    DictionaryEntry* maxPrev = nullptr;
+    DictionaryEntry* prev = nullptr;
+
+    while (current) {
+        if (current->accessCount > maxNode->accessCount) {
+            maxNode = current;
+            maxPrev = prev;
+        }
+        prev = current;
+        current = current->next;
+    }
+
+    if (maxNode == head) head = head->next;
+    else if (maxPrev) maxPrev->next = maxNode->next;
+    maxNode->next = nullptr;
+    return maxNode;
+}
+
+void printAndTransfer(DictionaryEntry*& oldHead, DictionaryEntry*& newHead, const string& filename) {
+    if (oldHead) {
+        DictionaryEntry* maxNode = findAndRemoveMaxAccess(oldHead);
+        if (maxNode) {
+            cout << "Transferring: " << maxNode->englishWord << " - " << maxNode->ukrainianWord << " (Accesses: " << maxNode->accessCount << ")" << endl;
+            maxNode->next = newHead;
+            newHead = maxNode;
+
+            // Save the transferred node to the specified file
+            ofstream outFile(filename, ios::app); // Open file in append mode
+            if (outFile.is_open()) {
+                outFile << maxNode->englishWord << ":" << maxNode->ukrainianWord << ":" << maxNode->accessCount << "\n";
+                outFile.close();
+                cout << "Entry saved to file: " << filename << endl;
+            }
+            else {
+                cout << "Unable to open file for writing." << endl;
+            }
+        }
+        cout << "New Dictionary After Transfer:\n";
+        printDictionary(newHead);
+    }
+    else {
+        cout << "No entries left to transfer.\n";
     }
 }
 
 int main() {
     DictionaryEntry* listHead = nullptr;
-    DictionaryEntry* treeHead = nullptr;
-    std::string filename, eng, ukr;
+    DictionaryEntry* newListHead = nullptr;
+    string filename, eng, ukr;
     int choice;
 
     while (true) {
-        std::cout << "1. Add or Update Entry\n";
-        std::cout << "2. Remove Entry\n";
-        std::cout << "3. Print Dictionary (List)\n";
-        std::cout << "4. Load from file\n";
-        std::cout << "5. Save to file\n";
-        std::cout << "6. Rebuild Dictionary (to Tree)\n";
-        std::cout << "7. Print Dictionary (Tree)\n";
-        std::cout << "8. Exit\n";
-        if (!readInt(choice)) {
-            std::cout << "Invalid input. Please try again.\n";
-            continue;
-        }
+        cout << "1. Add or Update Entry\n";
+        cout << "2. Remove Entry\n";
+        cout << "3. Print Initial Dictionary\n";
+        cout << "4. Load from file\n";
+        cout << "5. Save to file\n";
+        cout << "6. Transfer entries based on max access to new list and print\n";
+        cout << "8. Exit\n";
+        cout << "Enter your choice: ";
+        cin >> choice;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');  // Clear input buffer
 
         switch (choice) {
         case 1:
-            std::cout << "Enter English word: ";
+            cout << "Enter English word: ";
             if (!readLine(eng)) continue;
-            std::cout << "Enter Ukrainian word: ";
+            cout << "Enter Ukrainian word: ";
             if (!readLine(ukr)) continue;
-            addOrUpdateEntry(listHead, eng, ukr);
+            addOrUpdateEntry(listHead, eng, ukr, 1);  // Assuming an access counts as an addition
             break;
         case 2:
-            std::cout << "Enter English word to remove: ";
+            cout << "Enter English word to remove: ";
             if (!readLine(eng)) continue;
             removeEntry(listHead, eng);
             break;
         case 3:
-            std::cout << "Initial Dictionary (List):\n";
-            printList(listHead);
+            cout << "Initial Dictionary (List):\n";
+            printDictionary(listHead);
             break;
         case 4:
-            std::cout << "Enter filename to load from: ";
+            cout << "Enter filename to load from: ";
             if (!readLine(filename)) continue;
             loadDictionaryFromFile(listHead, filename);
             break;
         case 5:
-            std::cout << "Enter filename to save to: ";
+            cout << "Enter filename to save to: ";
             if (!readLine(filename)) continue;
             saveDictionaryToFile(listHead, filename);
             break;
         case 6:
-            rebuildDictionary(listHead, treeHead);
-            deleteList(listHead);
-            listHead = nullptr;
-            break;
-        case 7:
-            printBinaryTree(treeHead);
+            cout << "Enter filename to save transferred entry: ";
+            if (!readLine(filename)) continue;
+            printAndTransfer(listHead, newListHead, filename);
             break;
         case 8:
-            deleteTree(treeHead);
-            std::cout << "Exiting program.\n";
+            cout << "Exiting program.\n";
+            deleteDictionary(listHead);
+            deleteDictionary(newListHead);
             return 0;
         default:
-            std::cout << "Invalid choice. Please try again.\n";
+            cout << "Invalid choice. Please try again.\n";
             break;
         }
     }
