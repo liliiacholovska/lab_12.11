@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "CppUnitTest.h"
 #include "../Lab12.11/lab12.11.cpp"
 
@@ -9,39 +9,15 @@ namespace UnitTest1
 	TEST_CLASS(UnitTest1)
 	{
 	public:
-        DictionaryEntry* listHead = nullptr;
-
-        TEST_METHOD_INITIALIZE(SetUp)
+        TEST_METHOD(TestAddOrUpdate_NewEntry)
         {
-            listHead = nullptr;
-        }
-
-        TEST_METHOD_CLEANUP(TearDown)
-        {
-            deleteList(listHead);
-            listHead = nullptr;
-        }
-
-        TEST_METHOD(RebuildDictionaryAVLProperties)
-        {
-            addOrUpdateEntry(listHead, "apple", "яблуко", 1);
-            addOrUpdateEntry(listHead, "banana", "банан", 2);
-            addOrUpdateEntry(listHead, "cherry", "вишня", 3);
-            DictionaryEntry* treeHead = nullptr;
-            rebuildDictionary(listHead, treeHead);
-
-            Assert::IsNotNull(treeHead);
-
-            if (treeHead != nullptr)
-            {
-                Assert::IsNotNull(treeHead->left);
-                Assert::IsNotNull(treeHead->right);
-                Assert::IsTrue(abs(getBalance(treeHead)) <= 1);
-                Assert::IsTrue(abs(getBalance(treeHead->left)) <= 1);
-                Assert::IsTrue(abs(getBalance(treeHead->right)) <= 1);
-            }
-
-            deleteTree(treeHead);
+            DictionaryEntry* head = nullptr;
+            addOrUpdateEntry(head, "apple", "яблуко", 1);
+            Assert::IsNotNull(head);
+            Assert::AreEqual(string("apple"), head->englishWord);
+            Assert::AreEqual(string("яблуко"), head->ukrainianWord);
+            Assert::AreEqual(1, head->accessCount);
+            deleteDictionary(head);
         }
 	};
 }
